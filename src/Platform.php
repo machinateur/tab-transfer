@@ -42,6 +42,11 @@ final class Platform
         return 0 === \strpos(\PHP_OS, 'WIN');
     }
 
+    public static function isMacOs(): bool
+    {
+        return \PHP_OS === 'Darwin';
+    }
+
     /**
      * Extract a reference to a class-private property.
      *
@@ -114,11 +119,11 @@ final class Platform
         }
 
         if (Platform::isWindows()) {
-            // Batch files require all `%` to be escaped with another `%`.
+            // Windows Batch files require all `%` to be escaped with another `%`.
             $url = \str_replace('%', '%%', $url);
 
             $command = ['start', '', "{$url}"];
-        } elseif (\PHP_OS === 'Darwin') {
+        } elseif (Platform::isMacOs()) {
             // On Mac, we can use `open`, the URL must not be quoted for some reason.
             $command = ['open', '-u', "{$url}"];
         } else {
