@@ -100,15 +100,27 @@ abstract class AbstractDriver implements DriverLifecycleInterface, DriverUrlInte
         $console->writeln("Checking for availability of `$shellCommand`.", OutputInterface::VERBOSITY_VERY_VERBOSE);
 
         $commandAvailable = Platform::isShellCommandAvailable($shellCommand);
+        if ($commandAvailable) {
+            $console->writeln("The `$shellCommand` command is available.", OutputInterface::VERBOSITY_VERY_VERBOSE);
+
+            return true;
+        } else {
+            $console->writeln("The `$shellCommand` command was not found!", OutputInterface::VERBOSITY_VERY_VERBOSE);
+        }
 
         // TODO: Support local path installation relative (in tools/).
-        if ($commandAvailable) {
+        $console->writeln("Checking for availability of `$shellCommand` executable.", OutputInterface::VERBOSITY_VERY_VERBOSE);
+
+        $executableAvailable = \is_file($shellCommand) && Platform::isExecutable($shellCommand);
+        if ($executableAvailable) {
             $console->writeln("The `$shellCommand` executable is available.", OutputInterface::VERBOSITY_VERY_VERBOSE);
+
+            return true;
         } else {
             $console->writeln("The `$shellCommand` executable was not found!", OutputInterface::VERBOSITY_VERY_VERBOSE);
         }
 
-        return $commandAvailable;
+        return false;
     }
 
     protected function getShellCommand(): ?string
