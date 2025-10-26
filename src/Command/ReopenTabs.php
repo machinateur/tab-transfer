@@ -61,6 +61,7 @@ class ReopenTabs extends AbstractCopyTabsCommand
 
     protected function configure(): void
     {
+        // TODO: Only allow `--wdp-target` here (from `RestoreTabsDriver::getTabLoader()`).
         $this->ignoreValidationErrors();
 
         parent::configure();
