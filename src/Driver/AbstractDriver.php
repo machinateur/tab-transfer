@@ -2,7 +2,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2021-2024 machinateur
+ * Copyright (c) 2021-2026 machinateur
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @method $this setConsole(Console $console)
  * @method $this setInput(InputInterface $input)
  * @method $this setOutput(OutputInterface $output)
- * @method $this setFileDate(?\DateTimeInterface $date)
+ * @method $this setFileDate(?\DateTimeInterface $date, ?string $dateFormat)
  */
 abstract class AbstractDriver implements DriverLifecycleInterface, DriverUrlInterface, DriverEnvironmentCheckInterface
 {

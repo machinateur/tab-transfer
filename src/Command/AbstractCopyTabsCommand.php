@@ -2,7 +2,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2021-2024 machinateur
+ * Copyright (c) 2021-2026 machinateur
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,6 @@ use Machinateur\ChromeTabTransfer\Shared\AccessibleInput;
 use Machinateur\ChromeTabTransfer\Shared\Console;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
-use Symfony\Component\Console\Input\Input;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -53,7 +52,7 @@ abstract class AbstractCopyTabsCommand extends Command
     public const DEFAULT_PORT    = AndroidDebugBridge::DEFAULT_PORT;
     public const DEFAULT_TIMEOUT = AndroidDebugBridge::DEFAULT_TIMEOUT;
 
-    protected readonly \DateTimeInterface $date;
+    protected \DateTimeInterface $date;
 
     protected readonly CopyTabsService $service;
 
@@ -76,7 +75,8 @@ abstract class AbstractCopyTabsCommand extends Command
     {
         $this
             ->addArgument('file', InputArgument::OPTIONAL, 'The relative filepath to write. The `--date` / `--no-date` flag applies as well.', self::DEFAULT_FILE)
-            ->addOption('date', 'd', InputOption::VALUE_NEGATABLE, "Whether to add the date `{$this->date->format(AbstractFileTemplate::DATE_FORMAT)}` suffix to the filename. Active by Default.", true)
+            ->addOption('date', 'd', InputOption::VALUE_NEGATABLE, "Whether to add the date `--date-format|-f` suffix to the filename. Active by Default.", true)
+            ->addOption('date-format', 'f', InputOption::VALUE_REQUIRED, "A valid date format to use for the date suffix to the filename, when not `--no-date`.", AbstractFileTemplate::DATE_FORMAT)
             ->addOption('port', 'p', InputOption::VALUE_REQUIRED, 'The port to forward requests through.', self::DEFAULT_PORT)
             ->addOption('timeout', 't', InputOption::VALUE_REQUIRED, 'The network timeout for the download request (at last 10 seconds).', self::DEFAULT_TIMEOUT)
             ->addOption('skip-check', null, InputOption::VALUE_NONE, 'Skip the check for required dependencies ony your system will be performed.')
@@ -163,7 +163,8 @@ abstract class AbstractCopyTabsCommand extends Command
             $this->getDriver($console)
                 ->setConsole($console)
                 ->setFileDate(
-                    $this->getArgumentDate($console)
+                    $this->getArgumentDate($console),
+                    $this->getArgumentDateFormat($console),
                 )
         );
     }
@@ -217,6 +218,19 @@ abstract class AbstractCopyTabsCommand extends Command
         return $console->input->getOption('date')
             ? $this->date
             : null;
+    }
+
+    protected function getArgumentDateFormat(Console $console): string
+    {
+        $argumentDateFormat = $console->input->getOption('date-format');
+
+        if (!\date($argumentDateFormat)) {
+            $argumentDateFormat = AbstractFileTemplate::DATE_FORMAT;
+
+            $console->warning("Invalid date format provided, default to `{$argumentDateFormat}`..");
+        }
+
+        return $argumentDateFormat;
     }
 
     protected function getArgumentPort(Console $console): int

@@ -2,7 +2,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2021-2024 machinateur
+ * Copyright (c) 2021-2026 machinateur
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,14 +31,22 @@ trait FileDateTrait
 {
     protected ?\DateTimeInterface $date = null;
 
+    protected ?string $dateFormat       = null;
+
     public function getFileDate(): ?\DateTimeInterface
     {
         return $this->date;
     }
 
-    public function setFileDate(?\DateTimeInterface $date): static
+    public function getDateFormat(): ?string
     {
-        $this->date = $date;
+        return $this->dateFormat;
+    }
+
+    public function setFileDate(?\DateTimeInterface $date, ?string $dateFormat): static
+    {
+        $this->date       = $date;
+        $this->dateFormat = $dateFormat;
         return $this;
     }
 }

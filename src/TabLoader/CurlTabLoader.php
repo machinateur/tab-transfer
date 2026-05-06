@@ -2,7 +2,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2021-2024 machinateur
+ * Copyright (c) 2021-2026 machinateur
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -58,8 +58,8 @@ class CurlTabLoader implements TabLoaderInterface
     final protected function exec(
         ?int    &$capturedErrorCode    = 0,
         ?string &$capturedErrorMessage = null,
-        string  $url     = null,
-        int     $timeout = null,
+        ?string $url     = null,
+        ?int    $timeout = null,
         bool    $isPutRequest     = false,
     ): ?string {
         $url     ??= $this->url;

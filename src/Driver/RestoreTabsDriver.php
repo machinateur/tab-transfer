@@ -2,7 +2,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2021-2024 machinateur
+ * Copyright (c) 2021-2026 machinateur
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -103,7 +103,7 @@ class RestoreTabsDriver extends AbstractDriver
         return (new CurlReopenTabLoader($url, $this->timeout, $this->file))
             ->setOutput($this->output)
             ->setDebug($this->debug)
-            ->setFileDate($this->date);
+            ->setFileDate($this->date, $this->dateFormat);
     }
 
     /**
@@ -140,9 +140,9 @@ class RestoreTabsDriver extends AbstractDriver
         return parent::setOutput($output);
     }
 
-    public function setFileDate(?\DateTimeInterface $date): static
+    public function setFileDate(?\DateTimeInterface $date, ?string $dateFormat): static
     {
-        $this->driver->setFileDate($date);
-        return parent::setFileDate($date);
+        $this->driver->setFileDate($date, $dateFormat);
+        return parent::setFileDate($date, $dateFormat);
     }
 }
