@@ -1,1 +1,217 @@
-<?php/* * MIT License * * Copyright (c) 2021-2025 machinateur * * Permission is hereby granted, free of charge, to any person obtaining a copy * of this software and associated documentation files (the "Software"), to deal * in the Software without restriction, including without limitation the rights * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell * copies of the Software, and to permit persons to whom the Software is * furnished to do so, subject to the following conditions: * * The above copyright notice and this permission notice shall be included in all * copies or substantial portions of the Software. * * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE * SOFTWARE. */declare(strict_types=1);namespace Machinateur\ChromeTabTransfer\Driver;use Machinateur\ChromeTabTransfer\Platform;use Symfony\Component\Console\Output\OutputInterface;use Symfony\Component\Process\Process;/** * Command process for [chrome devtools protocol](https://chromedevtools.github.io/devtools-protocol/). * * Sadly, this is locked down since Google Chrome version 136, [for security reasons](https://developer.chrome.com/blog/remote-debugging-port). *  Summary: The remote debugging port cannot be specified when using the standard *user data dir*, as per the following message: * * > DevTools remote debugging requires a non-default data directory. Specify this using --user-data-dir. * * As a consequence, the tabs from your default profile are stuck there, and cannot be transferred from/to. *  On the good side, your cookies cannot be stolen through the attack method which caused this change. *   See also the following blog posts for details: * *  - https://embracethered.com/blog/posts/2024/cookie-theft-in-2024-and-what-todo/ *  - https://mango.pdf.zone/stealing-chrome-cookies-without-a-password/ *  - https://developer.chrome.com/blog/chrome-for-testing *      - https://github.com/GoogleChromeLabs/chrome-for-testing#json-api-endpoints *  - https://chromium.googlesource.com/chromium/src/+/HEAD/docs/user_data_dir.md *  - https://docs.google.com/document/d/1XJvxyqAQjhPfJ0rX84PjfXXb5sBx3m8DXzMxR0ipQNs/edit?tab=t.0#heading=h.j7abhcnnl3y7 *  - https://github.com/natkuhn/Chrome-Debug/ */class DesktopChromium extends AbstractDriver{    /**     * The default port for thr browser `--remote-debugging-port` value.     *     * @var int     */    public const DEFAULT_PORT = 9222;    /**     * The default timeout for requests to the endpoint.     */    public const DEFAULT_TIMEOUT = 10;    /**     * The default amount of seconds to wait before returning from process start/stop calls.     *     * @var int     */    public const DEFAULT_DELAY        = 1;    /**     * The default path to the chrome profile. By default, this points to a local isolated path.     */    public const DEFAULT_PROFILE_NAME = 'cruserdata';    private readonly Process $process;    public readonly string $browser;    /**     * @param positive-int  $delay     */    public function __construct(        string                 $browser,        string                 $file,        int                    $port        = self::DEFAULT_PORT,        bool                   $debug       = false,        int                    $timeout     = self::DEFAULT_TIMEOUT,        public readonly int    $delay       = self::DEFAULT_DELAY,        public readonly string $profileName = self::DEFAULT_PROFILE_NAME,    ) {        parent::__construct($file, $port, $debug, $timeout);        $this->browser = \escapeshellcmd($browser);        if (Platform::isPhar()) {            $userDataDir = \getcwd() . \DIRECTORY_SEPARATOR . $profileName;        } else {            $userDataDir = __DIR__                . \DIRECTORY_SEPARATOR . '..'                . \DIRECTORY_SEPARATOR . '..'                . \DIRECTORY_SEPARATOR . $profileName;        }        if (Platform::isWindows()) {            // Call the given application path on Windows.            $command = ["{$this->browser}", "--remote-debugging-port={$this->port}", "--user-data-dir={$userDataDir}"];        } elseif (Platform::isMacOs()) {            // On Mac, we can use `open` to address a given application (`.app`).            $command = ['open', '-nW', "{$this->browser}", '--args', "--remote-debugging-port={$this->port}", "--user-data-dir={$userDataDir}"];        } else {            // Call the given application path on Linux.            $command = ["{$this->browser}", "--remote-debugging-port={$this->port}", "--user-data-dir={$userDataDir}"];        }        $this->process = new Process($command);    }    public function start(): void    {        $console = $this->getConsole();        $console->writeln(' ==> ' . __METHOD__ . ':', OutputInterface::VERBOSITY_DEBUG);        $console->comment("Starting `{$this->browser}` background process...");        $console->progressStart(1);        $this->process->start();        $console->progressFinish();        if (0 < $this->delay) {            $console->writeln("Waiting for {$this->delay} seconds...", OutputInterface::VERBOSITY_VERY_VERBOSE);            \sleep($this->delay);        }        $console->writeln(' ==> ' . __METHOD__ . ': Done.', OutputInterface::VERBOSITY_DEBUG);    }    public function stop(): void    {        $console = $this->getConsole();        $console->writeln(' ==> ' . __METHOD__ . ':', OutputInterface::VERBOSITY_DEBUG);        $console->comment("Stopping `{$this->browser}` background process...");        $console->progressStart(1);        $this->process->stop();        $this->process->wait();        $console->progressFinish();        if ($this->debug) {            $combinedProcessOutput = \array_filter(                \array_map(                    static fn(string $line): string => "< {$line}",                    \array_merge(                        \explode(\PHP_EOL, $this->process->getOutput()),                        \explode(\PHP_EOL, $this->process->getErrorOutput()),                    )                )            );            $console->writeln($combinedProcessOutput);            $console->newLine();        }        if (0 < $this->delay) {            $console->writeln("Waiting for {$this->delay} seconds...", OutputInterface::VERBOSITY_VERY_VERBOSE);            \sleep($this->delay);        }        $console->writeln(' ==> ' . __METHOD__ . ': Done.', OutputInterface::VERBOSITY_DEBUG);    }    public function getUrl(): string    {        return "http://localhost:{$this->port}/json/list";    }    public function checkEnvironment(): bool    {        $console = $this->getConsole();        $shellCommand = $this->getShellCommand();        if (empty($shellCommand)) {            $console->writeln('Empty browser provided!', OutputInterface::VERBOSITY_VERY_VERBOSE);            return false;        }        if (Platform::isMacOs()) {            $console->writeln("Checking an MacOS app path `$shellCommand`.", OutputInterface::VERBOSITY_VERY_VERBOSE);            // On Mac, we can use `open` to address a given application (`.app`).            $appAvailable = \file_exists($this->browser) && \is_dir($this->browser)                && \str_ends_with($this->browser, '.app');            if ($appAvailable) {                $console->writeln("The `$shellCommand` command is a MacOS app path.", OutputInterface::VERBOSITY_VERY_VERBOSE);                return true;            } else {                $console->writeln("The `$shellCommand` command is not a MacOS app path! Fallback to shell command.", OutputInterface::VERBOSITY_VERY_VERBOSE);            }        }        // Check the given application path on Linux and windows.        return parent::checkEnvironment();    }    protected function getShellCommand(): ?string    {        return $this->browser;    }}
+<?php
+/*
+ * MIT License
+ *
+ * Copyright (c) 2021-2025 machinateur
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+declare(strict_types=1);
+
+namespace Machinateur\ChromeTabTransfer\Driver;
+
+use Machinateur\ChromeTabTransfer\Platform;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Process;
+
+/**
+ * Command process for [chrome devtools protocol](https://chromedevtools.github.io/devtools-protocol/).
+ *
+ * Sadly, this is locked down since Google Chrome version 136, [for security reasons](https://developer.chrome.com/blog/remote-debugging-port).
+ *  Summary: The remote debugging port cannot be specified when using the standard *user data dir*, as per the following message:
+ *
+ * > DevTools remote debugging requires a non-default data directory. Specify this using --user-data-dir.
+ *
+ * As a consequence, the tabs from your default profile are stuck there, and cannot be transferred from/to.
+ *  On the good side, your cookies cannot be stolen through the attack method which caused this change.
+ *   See also the following blog posts for details:
+ *
+ *  - https://embracethered.com/blog/posts/2024/cookie-theft-in-2024-and-what-todo/
+ *  - https://mango.pdf.zone/stealing-chrome-cookies-without-a-password/
+ *  - https://developer.chrome.com/blog/chrome-for-testing
+ *      - https://github.com/GoogleChromeLabs/chrome-for-testing#json-api-endpoints
+ *  - https://chromium.googlesource.com/chromium/src/+/HEAD/docs/user_data_dir.md
+ *  - https://docs.google.com/document/d/1XJvxyqAQjhPfJ0rX84PjfXXb5sBx3m8DXzMxR0ipQNs/edit?tab=t.0#heading=h.j7abhcnnl3y7
+ *  - https://github.com/natkuhn/Chrome-Debug/
+ */
+class DesktopChromium extends AbstractDriver
+{
+    /**
+     * The default port for thr browser `--remote-debugging-port` value.
+     *
+     * @var int
+     */
+    public const DEFAULT_PORT = 9222;
+
+    /**
+     * The default timeout for requests to the endpoint.
+     */
+    public const DEFAULT_TIMEOUT = 10;
+
+    /**
+     * The default amount of seconds to wait before returning from process start/stop calls.
+     *
+     * @var int
+     */
+    public const DEFAULT_DELAY        = 1;
+
+    /**
+     * The default path to the chrome profile. By default, this points to a local isolated path.
+     */
+    public const DEFAULT_PROFILE_NAME = 'cruserdata';
+
+    private readonly Process $process;
+
+    public readonly string $browser;
+
+    /**
+     * @param positive-int  $delay
+     */
+    public function __construct(
+        string                 $browser,
+        string                 $file,
+        int                    $port        = self::DEFAULT_PORT,
+        bool                   $debug       = false,
+        int                    $timeout     = self::DEFAULT_TIMEOUT,
+        public readonly int    $delay       = self::DEFAULT_DELAY,
+        public readonly string $profileName = self::DEFAULT_PROFILE_NAME,
+    ) {
+        parent::__construct($file, $port, $debug, $timeout);
+
+        $this->browser = \escapeshellcmd($browser);
+
+        if (Platform::isPhar()) {
+            $userDataDir = \getcwd() . \DIRECTORY_SEPARATOR . $profileName;
+        } else {
+            $userDataDir = __DIR__
+                . \DIRECTORY_SEPARATOR . '..'
+                . \DIRECTORY_SEPARATOR . '..'
+                . \DIRECTORY_SEPARATOR . $profileName;
+        }
+
+        if (Platform::isWindows()) {
+            // Call the given application path on Windows.
+            $command = ["{$this->browser}", "--remote-debugging-port={$this->port}", "--user-data-dir={$userDataDir}"];
+        } elseif (Platform::isMacOs()) {
+            // On Mac, we can use `open` to address a given application (`.app`).
+            $command = ['open', '-nW', "{$this->browser}", '--args', "--remote-debugging-port={$this->port}", "--user-data-dir={$userDataDir}"];
+        } else {
+            // Call the given application path on Linux.
+            $command = ["{$this->browser}", "--remote-debugging-port={$this->port}", "--user-data-dir={$userDataDir}"];
+        }
+
+        $this->process = new Process($command);
+    }
+
+    public function start(): void
+    {
+        $console = $this->getConsole();
+        $console->writeln(' ==> ' . __METHOD__ . ':', OutputInterface::VERBOSITY_DEBUG);
+
+        $console->comment("Starting `{$this->browser}` background process...");
+
+        $console->progressStart(1);
+        $this->process->start();
+        $console->progressFinish();
+
+        if (0 < $this->delay) {
+            $console->writeln("Waiting for {$this->delay} seconds...", OutputInterface::VERBOSITY_VERY_VERBOSE);
+            \sleep($this->delay);
+        }
+
+        $console->writeln(' ==> ' . __METHOD__ . ': Done.', OutputInterface::VERBOSITY_DEBUG);
+    }
+
+    public function stop(): void
+    {
+        $console = $this->getConsole();
+        $console->writeln(' ==> ' . __METHOD__ . ':', OutputInterface::VERBOSITY_DEBUG);
+
+        $console->comment("Stopping `{$this->browser}` background process...");
+
+        $console->progressStart(1);
+        $this->process->stop();
+        $this->process->wait();
+        $console->progressFinish();
+
+        if ($this->debug) {
+            $combinedProcessOutput = \array_filter(
+                \array_map(
+                    static fn(string $line): string => "< {$line}",
+                    \array_merge(
+                        \explode(\PHP_EOL, $this->process->getOutput()),
+                        \explode(\PHP_EOL, $this->process->getErrorOutput()),
+                    )
+                )
+            );
+
+            $console->writeln($combinedProcessOutput);
+            $console->newLine();
+        }
+
+        if (0 < $this->delay) {
+            $console->writeln("Waiting for {$this->delay} seconds...", OutputInterface::VERBOSITY_VERY_VERBOSE);
+            \sleep($this->delay);
+        }
+
+        $console->writeln(' ==> ' . __METHOD__ . ': Done.', OutputInterface::VERBOSITY_DEBUG);
+    }
+
+    public function getUrl(): string
+    {
+        return "http://localhost:{$this->port}/json/list";
+    }
+
+    public function checkEnvironment(): bool
+    {
+        $console = $this->getConsole();
+
+        $shellCommand = $this->getShellCommand();
+        if (empty($shellCommand)) {
+            $console->writeln('Empty browser provided!', OutputInterface::VERBOSITY_VERY_VERBOSE);
+
+            return false;
+        }
+
+        if (Platform::isMacOs()) {
+            $console->writeln("Checking an MacOS app path `$shellCommand`.", OutputInterface::VERBOSITY_VERY_VERBOSE);
+
+            // On Mac, we can use `open` to address a given application (`.app`).
+            $appAvailable = \file_exists($this->browser) && \is_dir($this->browser)
+                && \str_ends_with($this->browser, '.app');
+
+            if ($appAvailable) {
+                $console->writeln("The `$shellCommand` command is a MacOS app path.", OutputInterface::VERBOSITY_VERY_VERBOSE);
+
+                return true;
+            } else {
+                $console->writeln("The `$shellCommand` command is not a MacOS app path! Fallback to shell command.", OutputInterface::VERBOSITY_VERY_VERBOSE);
+            }
+        }
+
+        // Check the given application path on Linux and windows.
+        return parent::checkEnvironment();
+    }
+
+    protected function getShellCommand(): ?string
+    {
+        return $this->browser;
+    }
+}

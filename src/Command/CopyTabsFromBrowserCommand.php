@@ -1,1 +1,123 @@
-<?php/* * MIT License * * Copyright (c) 2021-2025 machinateur * * Permission is hereby granted, free of charge, to any person obtaining a copy * of this software and associated documentation files (the "Software"), to deal * in the Software without restriction, including without limitation the rights * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell * copies of the Software, and to permit persons to whom the Software is * furnished to do so, subject to the following conditions: * * The above copyright notice and this permission notice shall be included in all * copies or substantial portions of the Software. * * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE * SOFTWARE. */declare(strict_types=1);namespace Machinateur\ChromeTabTransfer\Command;use Machinateur\ChromeTabTransfer\Driver\AbstractDriver;use Machinateur\ChromeTabTransfer\Driver\DesktopChromium;use Machinateur\ChromeTabTransfer\Shared\Console;use Symfony\Component\Console\Input\InputArgument;use Symfony\Component\Console\Input\InputOption;use Symfony\Component\Console\Output\OutputInterface;/** * A command implementation to copy tabs using the {@see DesktopChromium} driver. * * This command does not support the reopen script. * * @see https://chromedevtools.github.io/devtools-protocol/#endpoints */final class CopyTabsFromBrowserCommand extends AbstractCopyTabsCommand{    public const DEFAULT_WAIT         = DesktopChromium::DEFAULT_DELAY;    public const DEFAULT_PROFILE_NAME = DesktopChromium::DEFAULT_PROFILE_NAME;    public function __construct()    {        parent::__construct('browser');    }    protected function configure(): void    {        $this            ->setDescription('Transfer tabs from your local Chrome browser.')            ->addArgument('browser', InputArgument::REQUIRED, 'Browser executable or command.');        parent::configure();        $this            ->addArgument('profile', InputArgument::OPTIONAL, 'Path to the chrome user profile.', self::DEFAULT_PROFILE_NAME)            ->addOption('wait', 'w', InputOption::VALUE_REQUIRED, 'The time to wait before starting the download request (between 0 and 60 seconds).', self::DEFAULT_WAIT)        ;    }    private ?DesktopChromium $driver = null;    public function getDriver(Console $console): AbstractDriver    {        if ($this->driver) {            $console->writeln("Loading {$this->driverName} driver...", OutputInterface::VERBOSITY_VERY_VERBOSE);            $this->driver = null;        } else {            $console->writeln("Creating {$this->driverName} driver...", OutputInterface::VERBOSITY_VERY_VERBOSE);        }        return $this->driver ??= new DesktopChromium(            $this->getArgumentBrowser($console),            $this->getArgumentFile($console),            $this->getArgumentPort($console),            $this->getArgumentDebug($console),            $this->getArgumentTimeout($console),            $this->getArgumentWait($console),            $this->getArgumentProfileName($console),        );    }    protected function getArgumentBrowser(Console $console): string    {        // The validation of this is done through the driver's `checkEnvironment()` call directly.        $argumentBrowser = $console->input->getArgument('browser');        \assert(\is_string($argumentBrowser));        return $argumentBrowser;    }    protected function getArgumentWait(Console $console): int    {        $argumentWait = (int)$console->input->getOption('wait');        if (0 >= $argumentWait || 60 < $argumentWait) {            $argumentWait = self::DEFAULT_WAIT;            $console->warning("Invalid wait given, default to {$argumentWait}s.");        }        return $argumentWait;    }    private function getArgumentProfileName(Console $console): string    {        $argumentProfileName = $console->input->getArgument('profile');        \assert(\is_string($argumentProfileName));        return $argumentProfileName;    }}
+<?php
+/*
+ * MIT License
+ *
+ * Copyright (c) 2021-2025 machinateur
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+declare(strict_types=1);
+
+namespace Machinateur\ChromeTabTransfer\Command;
+
+use Machinateur\ChromeTabTransfer\Driver\AbstractDriver;
+use Machinateur\ChromeTabTransfer\Driver\DesktopChromium;
+use Machinateur\ChromeTabTransfer\Shared\Console;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+
+/**
+ * A command implementation to copy tabs using the {@see DesktopChromium} driver.
+ *
+ * This command does not support the reopen script.
+ *
+ * @see https://chromedevtools.github.io/devtools-protocol/#endpoints
+ */
+final class CopyTabsFromBrowserCommand extends AbstractCopyTabsCommand
+{
+    public const DEFAULT_WAIT         = DesktopChromium::DEFAULT_DELAY;
+
+    public const DEFAULT_PROFILE_NAME = DesktopChromium::DEFAULT_PROFILE_NAME;
+
+    public function __construct()
+    {
+        parent::__construct('browser');
+    }
+
+    protected function configure(): void
+    {
+        $this
+            ->setDescription('Transfer tabs from your local Chrome browser.')
+            ->addArgument('browser', InputArgument::REQUIRED, 'Browser executable or command.');
+
+        parent::configure();
+
+        $this
+            ->addArgument('profile', InputArgument::OPTIONAL, 'Path to the chrome user profile.', self::DEFAULT_PROFILE_NAME)
+            ->addOption('wait', 'w', InputOption::VALUE_REQUIRED, 'The time to wait before starting the download request (between 0 and 60 seconds).', self::DEFAULT_WAIT)
+        ;
+    }
+
+    private ?DesktopChromium $driver = null;
+
+    public function getDriver(Console $console): AbstractDriver
+    {
+        if ($this->driver) {
+            $console->writeln("Loading {$this->driverName} driver...", OutputInterface::VERBOSITY_VERY_VERBOSE);
+
+            $this->driver = null;
+        } else {
+            $console->writeln("Creating {$this->driverName} driver...", OutputInterface::VERBOSITY_VERY_VERBOSE);
+        }
+
+        return $this->driver ??= new DesktopChromium(
+            $this->getArgumentBrowser($console),
+            $this->getArgumentFile($console),
+            $this->getArgumentPort($console),
+            $this->getArgumentDebug($console),
+            $this->getArgumentTimeout($console),
+            $this->getArgumentWait($console),
+            $this->getArgumentProfileName($console),
+        );
+    }
+
+    protected function getArgumentBrowser(Console $console): string
+    {
+        // The validation of this is done through the driver's `checkEnvironment()` call directly.
+        $argumentBrowser = $console->input->getArgument('browser');
+
+        \assert(\is_string($argumentBrowser));
+
+        return $argumentBrowser;
+    }
+
+    protected function getArgumentWait(Console $console): int
+    {
+        $argumentWait = (int)$console->input->getOption('wait');
+
+        if (0 >= $argumentWait || 60 < $argumentWait) {
+            $argumentWait = self::DEFAULT_WAIT;
+
+            $console->warning("Invalid wait given, default to {$argumentWait}s.");
+        }
+
+        return $argumentWait;
+    }
+
+    private function getArgumentProfileName(Console $console): string
+    {
+        $argumentProfileName = $console->input->getArgument('profile');
+
+        \assert(\is_string($argumentProfileName));
+
+        return $argumentProfileName;
+    }
+}
