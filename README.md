@@ -280,6 +280,41 @@ Options:
 
 You can always view help information usinng `tab-transfer copy-tabs:iphone -h`.
 
+### Copy tabs from local Chrome
+
+```
+Description:
+  Transfer tabs from your local Chrome browser.
+
+Usage:
+  copy-tabs:browser [options] [--] <browser> [<file> [<profile>]]
+
+Arguments:
+  browser                        Browser executable or command.
+  file                           The relative filepath to write. The `--date` / `--no-date` flag applies as well. [default: "tabs.json"]
+  profile                        Path to the chrome user profile. [default: "cruserdata"]
+
+Options:
+  -d, --date|--no-date           Whether to add the date `--date-format|-f` suffix to the filename. Active by Default.
+  -f, --date-format=DATE-FORMAT  A valid date format to use for the date suffix to the filename, when not `--no-date`. [default: "Y-m-d"]
+  -p, --port=PORT                The port to forward requests through. [default: 9222]
+  -t, --timeout=TIMEOUT          The network timeout for the download request (at last 10 seconds). [default: 10]
+      --skip-check               Skip the check for required dependencies ony your system will be performed.
+  -w, --wait=WAIT                The time to wait before starting the download request (between 0 and 60 seconds). [default: 1]
+  -h, --help                     Display help for the given command. When no command is given display help for the list command
+  -q, --quiet                    Do not output any message
+  -V, --version                  Display this application version
+      --ansi|--no-ansi           Force (or disable --no-ansi) ANSI output
+  -n, --no-interaction           Do not ask any interactive question
+  -v|vv|vvv, --verbose           Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+```
+
+> **Note**:
+>
+> On macOS, you can simply provide the path to the `/Applications/Google Chrome.app` directory.
+>
+> As fallback, as well as for windows and linux, the shell command or executable path is checked.
+
 ### Reopen tabs
 
 ```
