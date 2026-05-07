@@ -81,11 +81,11 @@ class RestoreTabsDriver extends AbstractDriver
     {
         $console = $this->getConsole();
 
-        // On iphone, the `/json/new?...` endpoint is not supported. Bummer. But I've found a workaround using WDP directly.
+        // On iPhone, the `/json/new?...` endpoint is not supported. Bummer. But I've found a workaround using WDP directly.
         if ($this->driver instanceof IosWebkitDebugProxy) {
             // The first tab is the target page in almost all scenarios. Usually the ID is updated automatically on
             //  establishing the connection (as well as on every opening of a new tab).
-            $targetPage = (string)$console->input->getParameterOption('--wdp-target') ?: '1';
+            $targetPage = (string)$console->input->getOption('wdp-target') ?: '1';
 
             $console->writeln("Creating new tab restorer for iOS using WDP directly (page {$targetPage}).");
             $console->writeln('<fg=black;bg=yellow>This is an experimental feature and might be unstable.</>');

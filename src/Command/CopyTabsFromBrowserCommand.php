@@ -55,13 +55,13 @@ final class CopyTabsFromBrowserCommand extends AbstractCopyTabsCommand
     protected function configure(): void
     {
         $this
-            ->setDescription('Transfer tabs from your local Chrome browser.')
             ->addArgument('browser', InputArgument::REQUIRED, 'Browser executable or command.');
 
         parent::configure();
 
         $this
-            ->addArgument('profile', InputArgument::OPTIONAL, 'Path to the chrome user profile.', self::DEFAULT_PROFILE_NAME)
+            ->setDescription('Transfer tabs from your local Chrome browser.')
+            ->addArgument('profile', InputArgument::OPTIONAL, 'Relative path to the chrome user profile.', self::DEFAULT_PROFILE_NAME)
             ->addOption('wait', 'w', InputOption::VALUE_REQUIRED, 'The time to wait before starting the download request (between 0 and 60 seconds).', self::DEFAULT_WAIT)
         ;
     }
