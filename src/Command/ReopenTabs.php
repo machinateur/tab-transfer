@@ -61,22 +61,22 @@ class ReopenTabs extends AbstractCopyTabsCommand
 
     protected function configure(): void
     {
-        $this->ignoreValidationErrors();
-
         parent::configure();
 
         $definition = $this->getDefinition();
         // Here we use some black magic to extract a reference to the `$description` property of the InputOption.
-        $argumentPortDescription = & Platform::extractPropertyReference($definition->getArgument('file'), 'description');
+        $argumentFileDescription = & Platform::extractPropertyReference($definition->getArgument('file'), 'description');
         // Next we simply write to that reference - et-voilà.
-        $argumentPortDescription = 'The relative filepath to read. The `--date` / `--no-date` flag applies as well.';
+        $argumentFileDescription = 'The relative filepath to read. The `--date` / `--no-date` flag applies as well.';
 
         $this
             ->setName(self::NAME)
             ->setDescription('Restore tabs to your phone\'s Chrome browser.')
             ->addOption('driver', 'i', InputOption::VALUE_REQUIRED, 'The driver to use for restoration.')
-            // TODO: Add `--call` `-c` `some_script.php` option.
+            ->addOption('wdp-target', null, InputOption::VALUE_REQUIRED, '[iPhone] The target tab ID on the device.')
         ;
+
+        // TODO: Add `--call` `-c` `some_script.php` option.
     }
 
     private ?AbstractCopyTabsCommand $command = null;

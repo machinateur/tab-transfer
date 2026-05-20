@@ -40,6 +40,7 @@ if (false === in_array(PHP_SAPI, ['cli', 'phpdbg', 'embed'], true)) {
 require_once __DIR__ . '/vendor/autoload.php';
 
 use Machinateur\ChromeTabTransfer\Command\CheckEnvironment;
+use Machinateur\ChromeTabTransfer\Command\CopyTabsFromBrowserCommand;
 use Machinateur\ChromeTabTransfer\Command\LegacyCopyTabsCommand;
 use Machinateur\ChromeTabTransfer\Command\CopyTabsFromAndroid;
 use Machinateur\ChromeTabTransfer\Command\CopyTabsFromIphone;
@@ -53,6 +54,7 @@ $commands = [
     new CheckEnvironment(),
     new CopyTabsFromAndroid(),
     new CopyTabsFromIphone(),
+    new CopyTabsFromBrowserCommand(),
 ];
 $commands[] = new ReopenTabs();
 

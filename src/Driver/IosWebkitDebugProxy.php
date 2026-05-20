@@ -146,8 +146,10 @@ final class IosWebkitDebugProxy extends AbstractDriver
         $this->process->start();
         $console->progressFinish();
 
-        $console->writeln("Waiting for {$this->delay} seconds...", OutputInterface::VERBOSITY_VERY_VERBOSE);
-        \sleep($this->delay);
+        if (0 < $this->delay) {
+            $console->writeln("Waiting for {$this->delay} seconds...", OutputInterface::VERBOSITY_VERY_VERBOSE);
+            \sleep($this->delay);
+        }
 
         $console->writeln(' ==> ' . __METHOD__ . ': Done.', OutputInterface::VERBOSITY_DEBUG);
     }
@@ -179,8 +181,10 @@ final class IosWebkitDebugProxy extends AbstractDriver
             $console->newLine();
         }
 
-        $console->writeln("Waiting for {$this->delay} seconds...", OutputInterface::VERBOSITY_VERY_VERBOSE);
-        \sleep($this->delay);
+        if (0 < $this->delay) {
+            $console->writeln("Waiting for {$this->delay} seconds...", OutputInterface::VERBOSITY_VERY_VERBOSE);
+            \sleep($this->delay);
+        }
 
         $console->writeln(' ==> ' . __METHOD__ . ': Done.', OutputInterface::VERBOSITY_DEBUG);
     }
