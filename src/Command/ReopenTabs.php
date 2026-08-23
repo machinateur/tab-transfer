@@ -71,6 +71,9 @@ class ReopenTabs extends AbstractCopyTabsCommand
         // Next we simply write to that reference - et-voilà.
         $argumentPortDescription = 'The relative filepath to read. The `--date` / `--no-date` flag applies as well.';
 
+        $optionTimeoutDescription = & Platform::extractPropertyReference($definition->getOption('timeout'), 'description');
+        $optionTimeoutDescription = 'The network timeout for the upload requests (at last 10 seconds).';
+
         $this
             ->setName(self::NAME)
             ->setDescription('Restore tabs to your phone\'s Chrome browser.')
