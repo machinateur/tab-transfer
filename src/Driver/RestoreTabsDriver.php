@@ -82,7 +82,11 @@ class RestoreTabsDriver extends AbstractDriver
         $console = $this->getConsole();
 
         // On iphone, the `/json/new?...` endpoint is not supported. Bummer. But I've found a workaround using WDP directly.
-        if ($this->driver instanceof IosWebkitDebugProxy) {
+        // Update (June 16, 2026): The Android functionality was broken in some versions. See https://issues.chromium.org/issues/524343049.
+        // At least it's the same for both mobile platforms now, but the curl-based script will no longer work with the new versions.
+        if ($this->driver instanceof IosWebkitDebugProxy
+            || $this->driver instanceof AndroidDebugBridge
+        ) {
             // The first tab is the target page in almost all scenarios. Usually the ID is updated automatically on
             //  establishing the connection (as well as on every opening of a new tab).
             $targetPage = (string)$console->input->getParameterOption('--wdp-target') ?: '1';
@@ -99,7 +103,7 @@ class RestoreTabsDriver extends AbstractDriver
 
         $console->writeln("Creating new tab restorer for URL `{$url}` (timeout {$this->timeout}s)...", OutputInterface::VERBOSITY_DEBUG);
 
-        // Use the default `/json/new?...` endpoint for android.
+        // Use the default `/json/new?...` endpoint as fallback.
         return (new CurlReopenTabLoader($url, $this->timeout, $this->file))
             ->setOutput($this->output)
             ->setDebug($this->debug)
