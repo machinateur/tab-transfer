@@ -61,6 +61,8 @@ class ReopenTabs extends AbstractCopyTabsCommand
 
     protected function configure(): void
     {
+        // Required to allow certain platform-specific flags (--wdp-target).
+        // TODO: Do not rely on deactivation of parameter validation in future versions.
         $this->ignoreValidationErrors();
 
         parent::configure();
