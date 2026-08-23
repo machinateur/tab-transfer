@@ -30,7 +30,7 @@ namespace Machinateur\ChromeTabTransfer\File;
 /**
  * A simple webkit dev-tools protocol client, using web-sockets (`ws:`).
  *  It is used by the {@see \Machinateur\ChromeTabTransfer\TabLoader\WdpReopenTabLoader} to implement
- *   automated tab restoration on iphone.
+ *   automated tab restoration on iphone and android.
  *
  * This implementation is based on the
  *  example {@see https://github.com/google/ios-webkit-debug-proxy/blob/master/examples/wdp_client.html from the `ios_webkit_debug_proxy` docs}.
@@ -125,6 +125,7 @@ class WebsocketWdpClient extends AbstractFileTemplate
             var ws            = undefined;
             var commands      = {$commands};
             var commandsTotal = {$commandsTotal};
+            // TODO: Iterate target IDs, when connection fails.
             var url           = `ws://localhost:{$port}/devtools/page/{$targetPage}`;
             var targetId      = '{$targetPage}';
 
