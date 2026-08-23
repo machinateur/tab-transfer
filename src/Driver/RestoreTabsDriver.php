@@ -91,7 +91,7 @@ class RestoreTabsDriver extends AbstractDriver
             //  establishing the connection (as well as on every opening of a new tab).
             $targetPage = (string)$console->input->getParameterOption('--wdp-target') ?: '1';
 
-            $console->writeln("Creating new tab restorer for iOS using WDP directly (page {$targetPage}).");
+            $console->writeln("Creating new tab restorer using WDP directly (page {$targetPage}).");
             $console->writeln('<fg=black;bg=yellow>This is an experimental feature and might be unstable.</>');
 
             return (new WdpReopenTabLoader($this->port, $this->timeout, $this->file, $targetPage))

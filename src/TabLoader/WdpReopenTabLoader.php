@@ -43,8 +43,7 @@ use Symfony\Component\Filesystem\Filesystem;
  * A tab loader that will dump and open a new {@see \Machinateur\ChromeTabTransfer\File\WebsocketWdpClient} script in the browser.
  *
  * This implementation is to be used with iphone to restore tabs on the device. This is required to be done via websocket,
- *  as the usual `/json/new`...` endpoint (used for android) is not supported by `ios_webkit_debug_proxy`.
- * See {@see }
+ *  as the usual `/json/new`...` endpoint (formerly used for android) is not supported by `ios_webkit_debug_proxy`.
  */
 class WdpReopenTabLoader implements TabLoaderInterface
 {
