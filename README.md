@@ -32,7 +32,7 @@ This command line applications requires the following software to run:
 
 ### Windows
 
-Download the latest release installer from the [release](https://github.com/machinateur/android-chrome-tab-transfer/releases).
+Download the latest release installer from the [release page](https://github.com/machinateur/android-chrome-tab-transfer/releases).
  The installer contains all required software dependencies to run on your system.
 
 ### Mac
@@ -48,16 +48,15 @@ brew install ios-webkit-debug-proxy
 
 Then download the `.phar` file from the latest [release](https://github.com/machinateur/android-chrome-tab-transfer/releases).
 
-Alternatively you can also check out the project source with Git, but that requires some more steps to install oftware libraries.
+Alternatively you can also check out the project source with Git, but that requires some more steps to install software libraries.
 
 ### Linux
 
 ```bash
-sudo apt install php-cli
-# ...
+sudo apt install php-cli-8.1
 ```
 
-> Make sure it is at least PHP version `8.1`.
+> Make sure it is at least PHP version `8.1`. Tested with PHP `8.3`.
 
 Refer to the [Download page at developer.android.com](https://developer.android.com/tools/releases/platform-tools) for
  installation instructions of the Android platform tooling.
@@ -66,7 +65,7 @@ You can find installation instructions for the [iOS WebKit Debug Proxy by Google
 
 Then download the `.phar` file from the latest [release](https://github.com/machinateur/android-chrome-tab-transfer/releases).
 
-Alternatively you can also check out the project source with Git, but that requires some more steps to install oftware libraries.
+Alternatively you can also check out the project source with Git, but that requires some more steps to install software libraries.
 
 ### Direct download links
 

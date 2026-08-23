@@ -137,7 +137,7 @@ class CopyTabsService
     private function getFileTemplates(AbstractDriver $driver, array $tabs): array
     {
         $console = $driver->getConsole();
-        $console->note('Generating output files...');
+        $console->note('Generating output file contents...');
 
         $files = [];
         foreach ($driver->getFileTemplates($tabs) as $fileTemplate) {
