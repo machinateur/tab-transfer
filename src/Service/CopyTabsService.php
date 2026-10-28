@@ -108,6 +108,21 @@ class CopyTabsService
             $console->note("Writing {$filenameExtension} file...");
             $console->writeln("> {$filename}", OutputInterface::VERBOSITY_VERY_VERBOSE);
 
+            if ($this->filesystem->exists($filename)) {
+                $replace = $console->confirm("The file `{$filename}` already exists. Do you wish to overwrite it?");
+
+                if ( ! $replace) {
+                    if ($driver->debug) {
+                        // Don't throw inside the loop, and never after download process was finished.
+                        //throw FileTemplateDumpException::forExistingFile($filename);
+                    }
+
+                    $console->writeln("Skipping `{$filename}`, as it already exists.", OutputInterface::VERBOSITY_VERY_VERBOSE);
+
+                    continue;
+                }
+            }
+
             try {
                 $this->filesystem->dumpFile($filename, $content);
             } catch (IOException $exception) {
@@ -137,7 +152,7 @@ class CopyTabsService
     private function getFileTemplates(AbstractDriver $driver, array $tabs): array
     {
         $console = $driver->getConsole();
-        $console->note('Generating output files...');
+        $console->note('Generating output file contents...');
 
         $files = [];
         foreach ($driver->getFileTemplates($tabs) as $fileTemplate) {
@@ -151,21 +166,6 @@ class CopyTabsService
 
             $fileTemplateClass = $fileTemplate::class;
             $console->writeln("-> From {$fileTemplateClass} to file {$filename}.", OutputInterface::VERBOSITY_VERY_VERBOSE);
-
-            if ($this->filesystem->exists($filename)) {
-                $replace = $console->confirm("The file `{$filename}` already exists. Do you wish to overwrite it?");
-
-                if ( ! $replace) {
-                    if ($driver->debug) {
-                        // Don't throw inside the loop, and never after download process was finished.
-                        //throw FileTemplateDumpException::forExistingFile($filename);
-                    }
-
-                    $console->writeln("Skipping `{$filename}`, as it already exists.", OutputInterface::VERBOSITY_VERY_VERBOSE);
-
-                    continue;
-                }
-            }
 
             $content = (string) $fileTemplate;
 
