@@ -118,13 +118,14 @@ class WebsocketWdpClient extends AbstractFileTemplate
  -->
 <html lang="en">
 <head>
-    <title>tab-transfer - iOS WDP Script</title>
+    <title>tab-transfer - WDP Script</title>
     
     <script type="text/javascript">
         var wdpClient = (function () {
             var ws            = undefined;
             var commands      = {$commands};
             var commandsTotal = {$commandsTotal};
+            // TODO: Iterate target IDs, when connection fails.
             var url           = `ws://localhost:{$port}/devtools/page/{$targetPage}`;
             var targetId      = '{$targetPage}';
 

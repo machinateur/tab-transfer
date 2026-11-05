@@ -67,6 +67,7 @@ class WdpReopenTabLoader implements TabLoaderInterface
     private readonly Filesystem $filesystem;
 
     public function __construct(
+        public readonly string $url,
         public readonly int    $port,
         public readonly int    $timeout,
         public readonly string $file,
@@ -93,16 +94,49 @@ class WdpReopenTabLoader implements TabLoaderInterface
         $console->comment("Uploading tabs {$tabsCount} to device...");
 
         // Blocking process call to open the system's web-browser.
-        $result   = Platform::openInBrowser($wdpClientUrl = "http://localhost:{$this->port}/devtools/{$filename}");
+        $wdpClientUrl = \sprintf($this->url, $filename);
+        $nullOrigin   = false;
+
+        try {
+            /**
+             * This is a funny little trick they did to secure the websocket against remote access.
+             * > **WebSocket origin verification (--remote-allow-origins)**: When a WebSocket handshake includes an Origin header
+             * >  (such as from a web page), the origin must match the origins specified via --remote-allow-origins=<origin>
+             * >  (or --remote-allow-origins=*).
+             * > Non-matching origins receive 403 Forbidden.
+             * > Requests without an Origin header (such as CLI tools, Puppeteer, Node.js) are allowed by default.
+             *
+             * See also:
+             * - https://chromedevtools.github.io/devtools-protocol/#/security-restrictions
+             * - https://www.browserless.io/blog/chrome-remote-debugging#what-is-chrome-remote-debugging
+             * - https://issues.chromium.org/issues/40181051
+             * - https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Origin#null
+             * - https://github.com/pasky/chrome-cdp-skill/issues/40
+             * - https://issues.chromium.org/issues/40896897
+             * - https://github.com/apache/cordova-android/issues/1577
+             *
+             * And still with the flag on desktop browser applied, it will not be possible to enable it on the connected device.
+             */
+            $result = Platform::openInBrowser($wdpClientUrl, ! \str_starts_with($wdpClientUrl, 'file://'), $this->debug, [
+                "--remote-allow-origins=" . ($nullOrigin ? 'null' : '*'),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            $result = false;
+        }
 
         if ( ! $result) {
             $console->writeln('Browser process failed with non-zero exit-code!', OutputInterface::VERBOSITY_VERY_VERBOSE);
+
+            if (isset($e) && $this->debug) {
+                $console->writeln('Error: ' . $e->getMessage(), OutputInterface::VERBOSITY_VERY_VERBOSE);
+            }
         }
 
         $console->info([
             "Please open `{$wdpClientUrl}` in your browser. The transfer should start immediately.",
             'Simply close the page when the tabs were transferred.',
         ]);
+        $console->warning('Make sure to start the browser with the `--remote-allow-origins=\'*\'` option, to avoid connection issues.');
 
         // This needs `setConsole()` instead of `setOutput()` (currently used everywhere) to work.
         if ($console->input->isInteractive()) {

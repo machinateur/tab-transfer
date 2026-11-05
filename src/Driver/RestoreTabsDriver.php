@@ -49,6 +49,7 @@ class RestoreTabsDriver extends AbstractDriver
         bool                           $debug,
         int                            $timeout,
         public readonly AbstractDriver $driver,
+        public readonly string         $targetPage,
     ) {
         parent::__construct($file, $port, $debug, $timeout);
     }
@@ -73,6 +74,18 @@ class RestoreTabsDriver extends AbstractDriver
 
     public function getUrl(): string
     {
+        // Note the `%s` which is used in the `WdpReopenTabLoader`.
+        if ($this->driver instanceof IosWebkitDebugProxy) {
+            return "http://localhost:{$this->port}/devtools/%s";
+        }
+        if ($this->driver instanceof AndroidDebugBridge) {
+            // Take the base directory, i.e. `\dirname('client.html')` = `.`,
+            //  so the files are always dumped in PHP process CWD.
+            $cwd = \getcwd();
+
+            return "file://{$cwd}/%s";
+        }
+
         // Note the `%s` which is used in the `CurlReopenTabLoader`.
         return "http://localhost:{$this->port}/json/new?%s";
     }
@@ -80,26 +93,21 @@ class RestoreTabsDriver extends AbstractDriver
     public function getTabLoader(): TabLoaderInterface
     {
         $console = $this->getConsole();
+        $url     = $this->getUrl();
 
-        // On iphone, the `/json/new?...` endpoint is not supported. Bummer. But I've found a workaround using WDP directly.
+        // On iPhone, the `/json/new?...` endpoint is not supported. Bummer. But I've found a workaround using WDP directly.
         // Update (June 16, 2026): The Android functionality was broken in some versions. See https://issues.chromium.org/issues/524343049.
         // At least it's the same for both mobile platforms now, but the curl-based script will no longer work with the new versions.
         if ($this->driver instanceof IosWebkitDebugProxy
             || $this->driver instanceof AndroidDebugBridge
         ) {
-            // The first tab is the target page in almost all scenarios. Usually the ID is updated automatically on
-            //  establishing the connection (as well as on every opening of a new tab).
-            $targetPage = (string)$console->input->getParameterOption('--wdp-target') ?: '1';
-
-            $console->writeln("Creating new tab restorer using WDP directly (page {$targetPage}).");
+            $console->writeln("Creating new tab restorer using WDP directly (page {$this->targetPage}).");
             $console->writeln('<fg=black;bg=yellow>This is an experimental feature and might be unstable.</>');
 
-            return (new WdpReopenTabLoader($this->port, $this->timeout, $this->file, $targetPage))
+            return (new WdpReopenTabLoader($url, $this->port, $this->timeout, $this->file, $this->targetPage))
                 ->setDebug($this->debug)
                 ->setOutput($this->output);
         }
-
-        $url  = $this->getUrl();
 
         $console->writeln("Creating new tab restorer for URL `{$url}` (timeout {$this->timeout}s)...", OutputInterface::VERBOSITY_DEBUG);
 
