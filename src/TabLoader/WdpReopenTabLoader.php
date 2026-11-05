@@ -43,8 +43,7 @@ use Symfony\Component\Filesystem\Filesystem;
  * A tab loader that will dump and open a new {@see \Machinateur\ChromeTabTransfer\File\WebsocketWdpClient} script in the browser.
  *
  * This implementation is to be used with iphone to restore tabs on the device. This is required to be done via websocket,
- *  as the usual `/json/new`...` endpoint (used for android) is not supported by `ios_webkit_debug_proxy`.
- * See {@see }
+ *  as the usual `/json/new`...` endpoint (formerly used for android) is not supported by `ios_webkit_debug_proxy`.
  */
 class WdpReopenTabLoader implements TabLoaderInterface
 {
@@ -68,6 +67,7 @@ class WdpReopenTabLoader implements TabLoaderInterface
     private readonly Filesystem $filesystem;
 
     public function __construct(
+        public readonly string $url,
         public readonly int    $port,
         public readonly int    $timeout,
         public readonly string $file,
@@ -94,7 +94,8 @@ class WdpReopenTabLoader implements TabLoaderInterface
         $console->comment("Uploading tabs {$tabsCount} to device...");
 
         // Blocking process call to open the system's web-browser.
-        $result   = Platform::openInBrowser($wdpClientUrl = "http://localhost:{$this->port}/devtools/{$filename}");
+        $wdpClientUrl = \sprintf($this->url, $filename);
+        $result       = Platform::openInBrowser($wdpClientUrl);
 
         if ( ! $result) {
             $console->writeln('Browser process failed with non-zero exit-code!', OutputInterface::VERBOSITY_VERY_VERBOSE);

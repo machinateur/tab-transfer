@@ -61,8 +61,6 @@ class ReopenTabs extends AbstractCopyTabsCommand
 
     protected function configure(): void
     {
-        $this->ignoreValidationErrors();
-
         parent::configure();
 
         $definition = $this->getDefinition();
@@ -71,10 +69,14 @@ class ReopenTabs extends AbstractCopyTabsCommand
         // Next we simply write to that reference - et-voilà.
         $argumentPortDescription = 'The relative filepath to read. The `--date` / `--no-date` flag applies as well.';
 
+        $optionTimeoutDescription = & Platform::extractPropertyReference($definition->getOption('timeout'), 'description');
+        $optionTimeoutDescription = 'The network timeout for the upload requests (at last 10 seconds).';
+
         $this
             ->setName(self::NAME)
             ->setDescription('Restore tabs to your phone\'s Chrome browser.')
             ->addOption('driver', 'i', InputOption::VALUE_REQUIRED, 'The driver to use for restoration.')
+            ->addOption('wdp-target', null, InputOption::VALUE_REQUIRED, '[iOS] The WDP target page to use; the IDs are visible on the `/json` list endpoint.')
             // TODO: Add `--call` `-c` `some_script.php` option.
         ;
     }
@@ -141,6 +143,7 @@ class ReopenTabs extends AbstractCopyTabsCommand
             $command->getDriver(
                 $command->getDefaultConsole($console)
             ),
+            $this->getArgumentTargetPage($console),
         );
     }
 
@@ -203,5 +206,13 @@ class ReopenTabs extends AbstractCopyTabsCommand
     protected function getArgumentDriver(Console $console): ?string
     {
         return $console->input->getOption('driver');
+    }
+
+    protected function getArgumentTargetPage(Console $console): string
+    {
+        // The first tab is the target page in some scenarios. Usually the ID is updated automatically on
+        //  establishing the connection (as well as on every opening of a new tab).
+        // If this fails, use this parameter to choose a different target page.
+        return $console->input->getOption('wdp-target') ?: '1';
     }
 }

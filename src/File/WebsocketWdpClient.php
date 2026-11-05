@@ -125,6 +125,7 @@ class WebsocketWdpClient extends AbstractFileTemplate
             var ws            = undefined;
             var commands      = {$commands};
             var commandsTotal = {$commandsTotal};
+            // TODO: Iterate target IDs, when connection fails.
             var url           = `ws://localhost:{$port}/devtools/page/{$targetPage}`;
             var targetId      = '{$targetPage}';
 

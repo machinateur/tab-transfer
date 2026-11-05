@@ -103,6 +103,8 @@ final class AndroidDebugBridge extends AbstractDriver
 
     /**
      * The default timeout for requests to the endpoint.
+     *
+     * @var int
      */
     public const DEFAULT_TIMEOUT = 10;
 

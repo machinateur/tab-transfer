@@ -1,6 +1,7 @@
 /.idea/
 
 /vendor/
+/composer.lock
 
 box.json
 box.phar

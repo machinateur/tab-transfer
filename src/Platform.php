@@ -101,7 +101,10 @@ final class Platform
         return \is_executable($filename);
     }
 
-    public static function openInBrowser(string $url, bool $secure = true, bool $debug = false): bool
+    /**
+     * @throws \InvalidArgumentException
+     */
+    public static function openInBrowser(string $url, bool $secure = true, bool $debug = false, array $args = []): bool
     {
         $url = \filter_var($url, \FILTER_SANITIZE_URL);
 
@@ -117,11 +120,19 @@ final class Platform
             // Batch files require all `%` to be escaped with another `%`.
             $url = \str_replace('%', '%%', $url);
 
-            $command = ['start', '', "{$url}"];
+            $command = ['start', '', "{$url}", ...$args];
         } elseif (\PHP_OS === 'Darwin') {
+            if (0 < \count($args)) {
+                \array_unshift($args, '--args');
+            }
+
             // On Mac, we can use `open`, the URL must not be quoted for some reason.
-            $command = ['open', '-u', "{$url}"];
+            $command = ['open', '-u', "{$url}", ...$args];
         } else {
+            if (0 < \count($args)) {
+                throw new \InvalidArgumentException('Opening URLs in the default browser with custom args is not supported on linux.');
+            }
+
             // Portable command across most Linux distros.
             $command = ['xdg-open', "{$url}"];
         }
