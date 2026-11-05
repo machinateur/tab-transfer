@@ -26,7 +26,7 @@
 declare(strict_types=1);
 
 \define('APP_NAME', 'tab-transfer');
-\define('APP_VERSION', '0.7.0');
+\define('APP_VERSION', '0.7.1');
 
 // Additional information to be used in the application header.
 \define('APP_AUTHOR', 'machinateur');
