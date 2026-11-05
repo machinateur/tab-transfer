@@ -36,6 +36,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 
+/**
+ * A tab restorer that uses `adb` shell commands to open the input URLs.
+ *
+ * A possible alternative would be to use a custom WS client (without `origin` headers),
+ *  but this is less error-prone when there are again internal changes.
+ */
 class AdbReopenTabLoader implements TabLoaderInterface
 {
     use ConsoleTrait {

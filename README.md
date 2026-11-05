@@ -53,10 +53,10 @@ Alternatively you can also check out the project source with Git, but that requi
 ### Linux
 
 ```bash
-sudo apt install php-cli-8.3
+sudo apt install php-cli-8.5
 ```
 
-> Make sure it is at least PHP version `8.1`. Tested with PHP `8.3`.
+> Make sure it is at least PHP version `8.1`. Tested with PHP `8.5`.
 
 Refer to the [Download page at developer.android.com](https://developer.android.com/tools/releases/platform-tools) for
  installation instructions of the Android platform tooling.
