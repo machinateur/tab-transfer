@@ -29,6 +29,7 @@ namespace Machinateur\ChromeTabTransfer\Command;
 
 use Machinateur\ChromeTabTransfer\Driver\AbstractDriver;
 use Machinateur\ChromeTabTransfer\Driver\RestoreTabsDriver;
+use Machinateur\ChromeTabTransfer\Driver\RestoreTabsScriptDriver;
 use Machinateur\ChromeTabTransfer\Exception\CopyTabsException;
 use Machinateur\ChromeTabTransfer\Exception\ReopenTabsException;
 use Machinateur\ChromeTabTransfer\File\ReopenScriptFile;
@@ -77,7 +78,7 @@ class ReopenTabs extends AbstractCopyTabsCommand
             ->setDescription('Restore tabs to your phone\'s Chrome browser.')
             ->addOption('driver', 'i', InputOption::VALUE_REQUIRED, 'The driver to use for restoration.')
             ->addOption('wdp-target', null, InputOption::VALUE_REQUIRED, '[iOS] The WDP target page to use; the IDs are visible on the `/json` list endpoint.')
-            // TODO: Add `--call` `-c` `some_script.php` option.
+            ->addOption('call', 'c', InputOption::VALUE_REQUIRED, 'A PHP script to call with the restored tabs (`$_TABS`).')
         ;
     }
 
@@ -133,6 +134,18 @@ class ReopenTabs extends AbstractCopyTabsCommand
      */
     public function getDriver(Console $console): AbstractDriver
     {
+        $callScript = $this->getArgumentCall($console);
+
+        if (null !== $callScript) {
+            return new RestoreTabsScriptDriver(
+                $this->getArgumentFile($console),
+                $this->getArgumentPort($console),
+                $this->getArgumentDebug($console),
+                $this->getArgumentTimeout($console),
+                $callScript,
+            );
+        }
+
         $command = $this->getDriverCommand($console);
 
         return new RestoreTabsDriver(
@@ -214,5 +227,10 @@ class ReopenTabs extends AbstractCopyTabsCommand
         //  establishing the connection (as well as on every opening of a new tab).
         // If this fails, use this parameter to choose a different target page.
         return $console->input->getOption('wdp-target') ?: '1';
+    }
+
+    protected function getArgumentCall(Console $console): ?string
+    {
+        return $console->input->getOption('call');
     }
 }
